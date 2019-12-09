@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.qr.core.library.audio.recorder" />
+    package="com.qr.core.library.audio" />

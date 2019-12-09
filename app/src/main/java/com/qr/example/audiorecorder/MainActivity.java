@@ -4,13 +4,21 @@ import android.Manifest;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.qr.core.library.audio.recorder.AudioRecorderButton;
+import com.qr.core.library.audio.AudioRecorderButton;
+import com.qr.library.adapter.QuickAdapter;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
@@ -29,24 +37,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        AudioRecorderButton audioRecorderButton = findViewById(R.id.arb);
-        File externalFilesDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
-        File file = new File(externalFilesDir, "records/");
-        audioRecorderButton.setOnAudioRecordStateChangedListener(new AudioRecorderButton.OnAudioRecordStateChangedListener() {
+        RecyclerView recyclerView = findViewById(R.id.rv_content);
+        List<String> list = new ArrayList<>();
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        list.add("1");
+        QuickAdapter<String> quickAdapter = new QuickAdapter<>(R.layout.item_content, -1, R.layout.footer_rab, list);
+        quickAdapter.setOnFooterConvertListener(new QuickAdapter.OnFooterConvertListener() {
             @Override
-            public void onFinish(String filePath) {
-                Log.d(TAG,filePath);
-            }
+            public void onFooterConvert(QuickAdapter.FooterViewHolder footerViewHolder) {
+                AudioRecorderButton audioRecorderButton = footerViewHolder.getView(R.id.arb_content);
+                File externalFilesDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+                File file = new File(externalFilesDir, "records/");
+                audioRecorderButton.setDir(file);
+                audioRecorderButton.setRecordStateChangedListener(new AudioRecorderButton.OnAudioRecordStateChangedListener() {
+                    @Override
+                    public void onStart(String filePath) {
+                        Log.d(TAG, "Start: " + filePath);
+                        Toast.makeText(MainActivity.this, "Start", Toast.LENGTH_SHORT).show();
+                    }
 
-            @Override
-            public void onError(String error) {
-                Log.d(TAG,error);
-            }
+                    @Override
+                    public void onUpdate(String filePath, long duration) {
+                        Log.d(TAG, "Update: " + filePath + " Duration: " + duration);
+                    }
 
-            @Override
-            public void onCancel() {
-                Log.d(TAG,"cancel");
+                    @Override
+                    public void onFinish(String filePath, long duration) {
+                        Log.d(TAG, filePath);
+                        Toast.makeText(MainActivity.this, filePath, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.d(TAG, error);
+                        Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        Log.d(TAG, "cancel");
+                        Toast.makeText(MainActivity.this, "Cancel", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
+        recyclerView.setAdapter(quickAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+
+
     }
 }
