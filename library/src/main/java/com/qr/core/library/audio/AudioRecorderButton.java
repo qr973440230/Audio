@@ -350,28 +350,28 @@ public class AudioRecorderButton extends AppCompatButton {
         if (dialog != null && dialog.isShowing()) {
             switch (level) {
                 case 1:
-                    ivLevel.setImageResource(R.drawable.volume_level_1);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_1);
                     break;
                 case 2:
-                    ivLevel.setImageResource(R.drawable.volume_level_2);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_2);
                     break;
                 case 3:
-                    ivLevel.setImageResource(R.drawable.volume_level_3);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_3);
                     break;
                 case 4:
-                    ivLevel.setImageResource(R.drawable.volume_level_4);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_4);
                     break;
                 case 5:
-                    ivLevel.setImageResource(R.drawable.volume_level_5);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_5);
                     break;
                 case 6:
-                    ivLevel.setImageResource(R.drawable.volume_level_6);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_6);
                     break;
                 case 7:
-                    ivLevel.setImageResource(R.drawable.volume_level_7);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_7);
                     break;
                 case 8:
-                    ivLevel.setImageResource(R.drawable.volume_level_8);
+                    ivLevel.setImageResource(R.drawable.volume_record_level_8);
                     break;
             }
         }

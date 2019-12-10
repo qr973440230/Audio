@@ -7,16 +7,6 @@
     <path
         android:name="level_nome"
         android:pathData="
-        M15,75
-        L26,75
-        M15,65
-        L29,65
-        M15,55
-        L32,55
-        M15,45
-        L35,45
-        M15,35
-        L38,35
         M15,15
         L44,15
         M15,25
@@ -28,9 +18,16 @@
     <path
         android:name="level"
         android:pathData="
-
-
-
+        M15,35
+        L38,35
+        M15,45
+        L35,45
+        M15,55
+        L32,55
+        M15,65
+        L29,65
+        M15,75
+        L26,75
         M15,85
         L23,85
         "

@@ -24,7 +24,6 @@
     <path
         android:name="level"
         android:pathData="
-
         M15,65
         L29,65
         M15,75

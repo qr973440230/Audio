@@ -1,6 +1,7 @@
 package com.qr.example.audiorecorder;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.qr.core.library.audio.AudioPlayerTextView;
 import com.qr.core.library.audio.AudioRecorderButton;
 import com.qr.library.adapter.QuickAdapter;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -23,6 +25,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
 
+    @SuppressLint("CheckResult")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,35 +42,14 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         RecyclerView recyclerView = findViewById(R.id.rv_content);
         List<String> list = new ArrayList<>();
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
         QuickAdapter<String> quickAdapter = new QuickAdapter<>(R.layout.item_content, -1, R.layout.footer_rab, list);
+        quickAdapter.setOnContentConvertListener(new QuickAdapter.OnContentConvertListener<String>() {
+            @Override
+            public void onContentConvert(QuickAdapter.ContentViewHolder contentViewHolder, String item) {
+                AudioPlayerTextView audioPlayerTextView = contentViewHolder.getView(R.id.aptv_content);
+                audioPlayerTextView.setDataSource(item);
+            }
+        });
         quickAdapter.setOnFooterConvertListener(new QuickAdapter.OnFooterConvertListener() {
             @Override
             public void onFooterConvert(QuickAdapter.FooterViewHolder footerViewHolder) {
@@ -90,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFinish(String filePath, long duration) {
                         Log.d(TAG, filePath);
+                        quickAdapter.addData(filePath);
                         Toast.makeText(MainActivity.this, filePath, Toast.LENGTH_SHORT).show();
                     }
 
@@ -109,8 +92,5 @@ public class MainActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(quickAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-
-
     }
 }

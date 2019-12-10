@@ -4,9 +4,12 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:layout_width="match_parent"
+    <com.qr.core.library.audio.AudioPlayerTextView
+        android:id="@+id/aptv_content"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="11111111111111"
-        android:textAlignment="center" />
+        android:layout_margin="8dp"
+        android:background="@color/colorPrimary"
+        android:textAlignment="center"
+        android:textColor="#fff" />
 </LinearLayout>
