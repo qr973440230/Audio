@@ -20,7 +20,6 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
