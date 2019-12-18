@@ -1,9 +1,11 @@
 package com.qr.core.library.audio;
 
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaRecorder;
@@ -19,9 +21,9 @@ import androidx.annotation.StringRes;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 public class AudioRecorderButton extends AppCompatButton {
@@ -34,11 +36,9 @@ public class AudioRecorderButton extends AppCompatButton {
 
     public AudioRecorderButton(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setBackgroundResource(R.drawable.btn_recorder_normal);
-        setText(R.string.str_recorder_normal);
+        setBackgroundResource(R.drawable.audio_btn_recorder_normal);
+        setText(R.string.audio_str_recorder_normal);
 
-        // 默认为外部缓存
-        dir = context.getExternalCacheDir();
 
         // 解决RecyclerView吞噬触摸事件的问题
         setOnTouchListener(new OnTouchListener() {
@@ -75,25 +75,39 @@ public class AudioRecorderButton extends AppCompatButton {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 // 显示Dialog
-                showRecordingDialog();
+                // 检查权限
+                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
+                    // 无录音权限 发生错误
+                    if (recordStateChangedListener != null) {
+                        recordStateChangedListener.onPermissionDenied(Manifest.permission.RECORD_AUDIO);
+                    }
+
+                    return false;
+                }
+                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    if (recordStateChangedListener != null) {
+                        recordStateChangedListener.onPermissionDenied(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    }
+
+                    return false;
+                }
                 startRecord();
                 changeState(STATE_RECORDING_NORMAL);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (curState == STATE_RECORDING_NORMAL) {
                     if (wantToCancel(x, y)) {
-                        updateNoticeText(R.string.str_recorder_recording_cancel);
+                        updateNoticeText(R.string.audio_str_recorder_recording_cancel);
                         changeState(STATE_RECORDING_CANCEL);
                     }
                 } else {
                     if (!wantToCancel(x, y)) {
-                        updateNoticeText(R.string.str_recorder_recording_normal);
+                        updateNoticeText(R.string.audio_str_recorder_recording_normal);
                         changeState(STATE_RECORDING_NORMAL);
                     }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                dismissDialog();
                 if (curState == STATE_RECORDING_NORMAL) {
                     // 录制结束
                     stopRecord();
@@ -105,7 +119,6 @@ public class AudioRecorderButton extends AppCompatButton {
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
-                dismissDialog();
                 cancelRecord();
                 changeState(STATE_CANCEL);
                 break;
@@ -130,24 +143,24 @@ public class AudioRecorderButton extends AppCompatButton {
 
         switch (curState) {
             case STATE_NORMAL:
-                setBackgroundResource(R.drawable.btn_recorder_normal);
-                setText(R.string.str_recorder_normal);
+                setBackgroundResource(R.drawable.audio_btn_recorder_normal);
+                setText(R.string.audio_str_recorder_normal);
                 break;
             case STATE_RECORDING_NORMAL:
-                setBackgroundResource(R.drawable.btn_recording);
-                setText(R.string.str_recorder_recording);
+                setBackgroundResource(R.drawable.audio_btn_recording);
+                setText(R.string.audio_str_recorder_recording);
                 break;
             case STATE_RECORDING_CANCEL:
-                setBackgroundResource(R.drawable.btn_recording);
-                setText(R.string.str_recorder_recording_cancel);
+                setBackgroundResource(R.drawable.audio_btn_recording);
+                setText(R.string.audio_str_recorder_recording_cancel);
                 break;
             case STATE_CANCEL:
-                setBackgroundResource(R.drawable.btn_recorder_normal);
-                setText(R.string.str_recorder_normal);
+                setBackgroundResource(R.drawable.audio_btn_recorder_normal);
+                setText(R.string.audio_str_recorder_normal);
                 break;
             case STATE_FINISH:
-                setBackgroundResource(R.drawable.btn_recorder_normal);
-                setText(R.string.str_recorder_normal);
+                setBackgroundResource(R.drawable.audio_btn_recorder_normal);
+                setText(R.string.audio_str_recorder_normal);
                 break;
         }
     }
@@ -167,11 +180,23 @@ public class AudioRecorderButton extends AppCompatButton {
     }
 
     private void startRecord() {
+        if (mediaRecorder != null) {
+            // 释放原先的资源
+            mediaRecorder.reset();
+            mediaRecorder.release();
+            mediaRecorder = null;
+        }
+
+        // 创建新得MediaPlayer
         mediaRecorder = new MediaRecorder();
         try {
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);// 设置麦克风
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+            if (dir == null) {
+                dir = getContext().getExternalCacheDir();
+            }
 
             File file = new File(dir, generateFileName());
             filePath = file.getAbsolutePath();
@@ -186,25 +211,19 @@ public class AudioRecorderButton extends AppCompatButton {
                 recordStateChangedListener.onStart(filePath);
             }
 
+            // 录音开启成功 显示Dialog
+            showRecordingDialog();
+
             // 开始更新状态
             updateMicStatus();
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            mediaRecorder.release();
-            dismissDialog();
             if (recordStateChangedListener != null) {
                 recordStateChangedListener.onError(e.getMessage());
             }
-            mediaRecorder = null;
-            filePath = null;
-            Log.i(TAG, "call startAmr(File mRecAudioFile) failed!" + e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            mediaRecorder.reset();
             mediaRecorder.release();
-            dismissDialog();
-            if (recordStateChangedListener != null) {
-                recordStateChangedListener.onError(e.getMessage());
-            }
             mediaRecorder = null;
             filePath = null;
             Log.i(TAG, "call startAmr(File mRecAudioFile) failed!" + e.getMessage());
@@ -212,6 +231,9 @@ public class AudioRecorderButton extends AppCompatButton {
     }
 
     private void stopRecord() {
+        // 关闭Dialog
+        dismissDialog();
+
         if (mediaRecorder == null) {
             return;
         }
@@ -229,18 +251,19 @@ public class AudioRecorderButton extends AppCompatButton {
             }
 
             Log.d(TAG, "Stop: " + filePath);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             Log.d(TAG, "Error: " + e.getMessage());
             if (recordStateChangedListener != null) {
                 recordStateChangedListener.onError(e.getMessage());
             }
 
-            // 错误删除文件
+            // 录音发生错误 删除错误文件
             File file = new File(filePath);
             if (file.exists()) {
                 file.delete();
             }
         } finally {
+            mediaRecorder.reset();
             mediaRecorder.release();
             mediaRecorder = null;
             filePath = null;
@@ -248,6 +271,9 @@ public class AudioRecorderButton extends AppCompatButton {
     }
 
     private void cancelRecord() {
+        // 关闭Dialog
+        dismissDialog();
+
         if (mediaRecorder == null) {
             return;
         }
@@ -258,22 +284,23 @@ public class AudioRecorderButton extends AppCompatButton {
                 recordStateChangedListener.onCancel();
             }
             Log.d(TAG, "Cancel: " + filePath);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             Log.d(TAG, "Error: " + e.getMessage());
             if (recordStateChangedListener != null) {
                 recordStateChangedListener.onError(e.getMessage());
             }
         } finally {
+            mediaRecorder.reset();
             mediaRecorder.release();
             mediaRecorder = null;
-        }
 
-        // 删除文件
-        File file = new File(filePath);
-        if (file.exists()) {
-            file.delete();
+            // 删除文件
+            File file = new File(filePath);
+            if (file.exists()) {
+                file.delete();
+            }
+            filePath = null;
         }
-        filePath = null;
     }
 
     private static String generateFileName() {
@@ -292,31 +319,42 @@ public class AudioRecorderButton extends AppCompatButton {
             return;
         }
 
-        int level = getVoiceLevel();
+        int level = getVoiceLevel(levelResource.length);
         updateVoiceLevel(level);
 
         if (recordStateChangedListener != null) {
             recordStateChangedListener.onUpdate(filePath, System.currentTimeMillis() - startTime);
         }
+
         // 间隔取样时间
         int SPACE = 100;
         mHandler.postDelayed(mUpdateMicStatusTimer, SPACE);
     }
 
-    private int getVoiceLevel() {
+    private int getVoiceLevel(int maxLevel) {
         if (mediaRecorder == null) {
-            return 1;
+            return 0;
         }
         try {
-            return 8 * mediaRecorder.getMaxAmplitude() / 32768 + 1;
+            return maxLevel * mediaRecorder.getMaxAmplitude() / 32768;
         } catch (Exception ignored) {
         }
 
-        return 1;
+        return 0;
     }
 
-
     // Dialog相关
+    private static int[] levelResource = {
+            R.drawable.audio_volume_record_level_1,
+            R.drawable.audio_volume_record_level_2,
+            R.drawable.audio_volume_record_level_3,
+            R.drawable.audio_volume_record_level_4,
+            R.drawable.audio_volume_record_level_5,
+            R.drawable.audio_volume_record_level_6,
+            R.drawable.audio_volume_record_level_7,
+            R.drawable.audio_volume_record_level_8,
+    };
+
     private Dialog dialog;
     private AppCompatImageView ivLevel;
     private AppCompatTextView tvNotice;
@@ -334,7 +372,7 @@ public class AudioRecorderButton extends AppCompatButton {
             return;
         }
 
-        @SuppressLint("InflateParams") View view = LayoutInflater.from(context).inflate(R.layout.dialog_record_audio, null);
+        @SuppressLint("InflateParams") View view = LayoutInflater.from(context).inflate(R.layout.audio_dialog_record_audio, null);
         ivLevel = view.findViewById(R.id.iv_level);
         tvNotice = view.findViewById(R.id.tv_notis);
         window.requestFeature(Window.FEATURE_NO_TITLE);
@@ -346,38 +384,13 @@ public class AudioRecorderButton extends AppCompatButton {
     }
 
     private void updateVoiceLevel(int level) {
-        if (dialog != null && dialog.isShowing()) {
-            switch (level) {
-                case 1:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_1);
-                    break;
-                case 2:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_2);
-                    break;
-                case 3:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_3);
-                    break;
-                case 4:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_4);
-                    break;
-                case 5:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_5);
-                    break;
-                case 6:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_6);
-                    break;
-                case 7:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_7);
-                    break;
-                case 8:
-                    ivLevel.setImageResource(R.drawable.volume_record_level_8);
-                    break;
-            }
+        if (dialog != null && dialog.isShowing() && ivLevel != null) {
+            ivLevel.setImageResource(levelResource[level]);
         }
     }
 
     private void updateNoticeText(@StringRes int id) {
-        if (dialog != null && dialog.isShowing()) {
+        if (dialog != null && dialog.isShowing() && tvNotice != null) {
             tvNotice.setText(id);
         }
     }
@@ -396,11 +409,9 @@ public class AudioRecorderButton extends AppCompatButton {
         this.recordStateChangedListener = recordStateChangedListener;
     }
 
-    public OnAudioRecordStateChangedListener getRecordStateChangedListener() {
-        return recordStateChangedListener;
-    }
-
     public interface OnAudioRecordStateChangedListener {
+        void onPermissionDenied(String permission);
+
         void onStart(String filePath);
 
         void onUpdate(String filePath, long duration);

@@ -13,40 +13,26 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class AudioPlayerTextView extends AppCompatTextView {
-    public static final String TAG = AudioPlayerTextView.class.getSimpleName();
-    public static List<AudioPlayerTextView> audioPlayerTextViews = new ArrayList<>();
+    private static final String TAG = AudioPlayerTextView.class.getSimpleName();
+    private static List<AudioPlayerTextView> audioPlayerTextViews = new ArrayList<>();
 
-    @Override
-    public void setOnClickListener(@Nullable OnClickListener l) {
-        // 啥也不做 禁止
-    }
 
     public AudioPlayerTextView(Context context) {
         super(context, null);
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        audioPlayerTextViews.add(this);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        audioPlayerTextViews.remove(this);
-    }
 
     public AudioPlayerTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        setTextSize(18);
+        // 默认16sp
+        setTextSize(16);
+        setPadding(0, 0, 8, 0);
         super.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -55,6 +41,7 @@ public class AudioPlayerTextView extends AppCompatTextView {
                         continue;
                     }
 
+                    // 所有其他AudioPlayerTextView暂停播放
                     audioPlayerTextView.pause();
                 }
 
@@ -73,12 +60,42 @@ public class AudioPlayerTextView extends AppCompatTextView {
         });
     }
 
-    // 播放相关 所有实例共享
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        audioPlayerTextViews.add(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        audioPlayerTextViews.remove(this);
+    }
+
+    static public void pauseAll() {
+        for (AudioPlayerTextView audioPlayerTextView : audioPlayerTextViews) {
+            audioPlayerTextView.pause();
+        }
+    }
+
+    static public void releaseAll() {
+        for (AudioPlayerTextView audioPlayerTextView : audioPlayerTextViews) {
+            audioPlayerTextView.release();
+        }
+    }
+
+    @Override
+    public void setOnClickListener(@Nullable OnClickListener l) {
+        // 啥也不做 禁止 防止覆盖当前
+    }
+
+    // 播放相关
     private MediaPlayer mediaPlayer;
     private boolean hasPrepared = false;
 
     public void setDataSource(String url) {
         if (mediaPlayer == null) {
+            // 设置MediaPlayer
             try {
                 mediaPlayer = new MediaPlayer();
                 mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -128,16 +145,14 @@ public class AudioPlayerTextView extends AppCompatTextView {
             mediaPlayer.reset();
             mediaPlayer.setDataSource(url);
             mediaPlayer.prepareAsync();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            Log.d(TAG, "MediaPlayer SetDataSource Error: " + e.getMessage());
-        } catch (IllegalStateException e) {
             Log.d(TAG, "MediaPlayer SetDataSource Error: " + e.getMessage());
         }
     }
 
-    private void play() {
-        if (mediaPlayer == null) {
+    public void play() {
+        if (mediaPlayer == null || mediaPlayer.isPlaying()) {
             return;
         }
 
@@ -151,7 +166,7 @@ public class AudioPlayerTextView extends AppCompatTextView {
         }
     }
 
-    private void pause() {
+    public void pause() {
         if (mediaPlayer == null || !mediaPlayer.isPlaying()) {
             return;
         }
@@ -162,6 +177,22 @@ public class AudioPlayerTextView extends AppCompatTextView {
             stopAnimate();
         } catch (Exception e) {
             Log.d(TAG, "Pause Failure : " + e.getMessage());
+        }
+    }
+
+    public void release() {
+        if (mediaPlayer == null) {
+            return;
+        }
+
+        try {
+            mediaPlayer.stop();
+        } catch (Exception e) {
+            Log.d(TAG, "Stop Failure : " + e.getMessage());
+        } finally {
+            mediaPlayer.reset();
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
     }
 
@@ -213,9 +244,11 @@ public class AudioPlayerTextView extends AppCompatTextView {
 
 
     // 声音动画相关
-    private int[] drawLefts = new int[]{R.drawable.volume_play_level_1,
-            R.drawable.volume_play_level_2,
-            R.drawable.volume_play_level_3};
+    private int[] drawLefts = new int[]{
+            R.drawable.audio_volume_play_level_1,
+            R.drawable.audio_volume_play_level_2,
+            R.drawable.audio_volume_play_level_3,
+    };
 
     private Handler animateHandle = new Handler();
     private Runnable animateRunnable = new Runnable() {

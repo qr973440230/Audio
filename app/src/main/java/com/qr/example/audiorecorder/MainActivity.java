@@ -5,10 +5,8 @@ import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,6 +20,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.disposables.Disposable;
+
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = MainActivity.class.getSimpleName();
 
@@ -30,13 +30,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        RxPermissions rxPermissions = new RxPermissions(this);
-        rxPermissions.request(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO)
-                .subscribe(aBoolean -> {
-                    if (aBoolean) {
-                        init();
-                    }
-                });
+        init();
     }
 
     private void init() {
@@ -58,6 +52,18 @@ public class MainActivity extends AppCompatActivity {
                 File file = new File(externalFilesDir, "records/");
                 audioRecorderButton.setDir(file);
                 audioRecorderButton.setRecordStateChangedListener(new AudioRecorderButton.OnAudioRecordStateChangedListener() {
+                    @Override
+                    public void onPermissionDenied(String permission) {
+                        // 无权限  进行权限申请
+                        RxPermissions rxPermissions = new RxPermissions(MainActivity.this);
+                        Disposable disposable = rxPermissions.request(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                .subscribe(aBoolean -> {
+                                    // 权限申请
+                                }, throwable -> {
+
+                                });
+                    }
+
                     @Override
                     public void onStart(String filePath) {
                         Log.d(TAG, "Start: " + filePath);
