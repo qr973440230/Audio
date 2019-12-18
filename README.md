@@ -71,8 +71,6 @@
     audioPlayerTextView.setDataSource(item); 
     
 ## 截图    
-![add image](https://github.com/qr973440230/Audio/blob/master/imges/*.png)
+![Image text](https://raw.githubusercontent.com/qr973440230/Audio/master/imges/Screenshot_1576635428.png)
 
-![](https://github.com/qr973440230/Audio/blob/master/imges/Screenshot_1576635428.png)
-
-![](https://github.com/qr973440230/Audio/blob/master/imges/Screenshot_1576635450.png)
+![Image text](https://raw.githubusercontent.com/qr973440230/Audio/master/imges/Screenshot_1576635450.png)
