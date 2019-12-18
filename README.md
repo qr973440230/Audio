@@ -72,5 +72,5 @@
     
 ## 截图    
 
-![Image text]()
-![Image text]()
+![Image text](https://github.com/qr973440230/Audio/blob/master/imges/Screenshot_1576635428.png)
+![Image text](https://github.com/qr973440230/Audio/blob/master/imges/Screenshot_1576635450.png)
